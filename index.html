@@ -1,0 +1,980 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ascend × Plaid Solution Deck</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one slide at a time between a slim control bar and a pager; same palette and type as the MyAscend demo so deck and demo read as one story. */
+:root {
+  --paper: #f6f4ef; --card: #ffffff; --ink: #1b2430; --muted: #5a6472; --rule: #dcd8ce;
+  --head: #13324d; --navy: #13324d; --on-navy: #f6f4ef;
+  --teal: #0e7c7b; --teal-tint: #e3f1f0; --amber: #b07612; --amber-tint: #fbf0dc;
+  --good: #1f7a4d; --good-tint: #e4f3ea; --warn: #8f6206; --warn-tint: #fdf2d8;
+  --bad: #b3261e; --bad-tint: #fbe7e5; --info: #2a5ba8; --info-tint: #e6eefa;
+  --code-bg: #12202e; --code-fg: #dbe4ee; --code-key: #7fd1cf; --code-str: #f2c879; --code-num: #f2a0a0;
+  --dim: .28;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0f1720; --card: #16212d; --ink: #e6ebf1; --muted: #9ba7b5; --rule: #2a3644;
+  --head: #eef2f6; --navy: #0b1a28; --on-navy: #eef2f6;
+  --teal: #46b8b5; --teal-tint: #12302f; --amber: #f0b54e; --amber-tint: #33280f;
+  --good: #5cc28b; --good-tint: #12301f; --warn: #e3b24a; --warn-tint: #33280f;
+  --bad: #f07468; --bad-tint: #3a1714; --info: #82abf0; --info-tint: #15233a;
+  --code-bg: #0a121b; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0f1720; --card: #16212d; --ink: #e6ebf1; --muted: #9ba7b5; --rule: #2a3644;
+  --head: #eef2f6; --navy: #0b1a28; --on-navy: #eef2f6;
+  --teal: #46b8b5; --teal-tint: #12302f; --amber: #f0b54e; --amber-tint: #33280f;
+  --good: #5cc28b; --good-tint: #12301f; --warn: #e3b24a; --warn-tint: #33280f;
+  --bad: #f07468; --bad-tint: #3a1714; --info: #82abf0; --info-tint: #15233a;
+  --code-bg: #0a121b; color-scheme: dark }
+
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.5 var(--body); }
+* { box-sizing: border-box; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; border-radius: 4px; }
+.app { height: 100%; display: grid; grid-template-rows: auto 1fr auto; }
+
+/* ---------- control bar ---------- */
+.bar { background: var(--navy); color: var(--on-navy); padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
+.brand svg { flex: none; }
+.lens { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-left: auto; }
+.lens > span { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; opacity: .7; margin-right: 4px; }
+.chip { border: 1px solid rgba(255,255,255,.28); background: transparent; color: var(--on-navy); border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; }
+.chip:hover { border-color: rgba(255,255,255,.6); }
+.chip[aria-pressed="true"] { background: #f6f4ef; color: #13324d; border-color: #f6f4ef; font-weight: 600; }
+.tools { display: flex; gap: 6px; }
+.tool { border: 1px solid rgba(255,255,255,.28); background: transparent; color: var(--on-navy); border-radius: 6px; padding: 4px 10px; font-size: 13px; cursor: pointer; }
+.tool[aria-pressed="true"] { background: rgba(255,255,255,.14); }
+
+/* ---------- stage ---------- */
+.stage { overflow: auto; position: relative; }
+.slide { max-width: 1240px; margin: 0 auto; padding-block: clamp(20px, 4vh, 44px) 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: clamp(16px, 2.6vh, 26px); align-content: start; }
+.slide.enter { animation: rise .35s ease both; }
+@keyframes rise { from { opacity: .001; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.kicker { font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--teal); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.kicker .for { font-weight: 600; letter-spacing: .04em; text-transform: none; color: var(--muted); font-size: 13px; }
+h1, h2, h3 { color: var(--head); margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(38px, 6vw, 72px); line-height: 1.02; font-weight: 800; letter-spacing: -.02em; }
+h2 { font-size: clamp(26px, 3.3vw, 40px); line-height: 1.12; font-weight: 800; letter-spacing: -.015em; }
+h3 { font-size: 18px; line-height: 1.3; font-weight: 700; }
+p { margin: 0; }
+.lede { font-size: clamp(17px, 1.6vw, 20px); color: var(--muted); max-width: 64ch; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.mono { font-family: var(--mono); }
+.grid { display: grid; gap: 16px; }
+.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.card { background: var(--card); border: 1px solid var(--rule); border-radius: var(--r); padding: 18px 20px; min-width: 0; }
+.card h3 + p, .card h3 + ul { margin-top: 6px; }
+ul.clean { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--teal-tint); color: var(--teal); white-space: nowrap; }
+.pill { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; padding: 6px 14px; border-radius: 999px; font-size: 15px; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.s-ready { background: var(--good-tint); color: var(--good); }
+.s-pending { background: var(--info-tint); color: var(--info); }
+.s-review { background: var(--warn-tint); color: var(--warn); }
+.s-hold { background: var(--bad-tint); color: var(--bad); }
+.s-card { background: var(--amber-tint); color: var(--amber); }
+.btn { border: 1px solid var(--rule); background: var(--card); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.btn:hover { border-color: var(--teal); }
+.btn[aria-pressed="true"], .btn.on { background: var(--teal); border-color: var(--teal); color: var(--paper); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+a.go { display: inline-flex; align-items: center; gap: 8px; background: var(--teal); color: var(--paper); text-decoration: none; font-weight: 700; padding: 10px 18px; border-radius: 8px; }
+a.go:hover { filter: brightness(1.08); }
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* stakeholder lens: dim what isn't for the chosen role */
+[data-for] { transition: opacity .25s ease; }
+.app[data-lens="ben"] [data-for]:not([data-for~="ben"]),
+.app[data-lens="fraud"] [data-for]:not([data-for~="fraud"]),
+.app[data-lens="cx"] [data-for]:not([data-for~="cx"]),
+.app[data-lens="cio"] [data-for]:not([data-for~="cio"]) { opacity: var(--dim); }
+
+/* ---------- S1 ---------- */
+.hero { display: grid; gap: 18px; padding-top: clamp(4px, 3vh, 32px); }
+.hero h1 em { font-style: normal; color: var(--teal); }
+.outcome { display: grid; gap: 8px; align-content: start; }
+.outcome .big { font-size: 30px; font-weight: 800; color: var(--head); line-height: 1.1; }
+.agenda { display: flex; flex-wrap: wrap; gap: 8px 22px; padding-top: 14px; border-top: 1px solid var(--rule); font-size: 15px; color: var(--muted); }
+.agenda b { color: var(--ink); font-weight: 600; }
+.agenda .live { color: var(--teal); font-weight: 700; }
+
+/* ---------- Plaid at a glance ---------- */
+.slide.glance { min-height: 100%; align-content: center; gap: clamp(18px, 4vh, 48px); padding-block: clamp(16px, 3vh, 40px); }
+.slide.glance h2 { font-size: clamp(26px, 2.9vw, 38px); }
+.glance-top { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 64px); align-items: center; }
+.glance-top .lead { display: grid; gap: clamp(14px, 2.4vh, 22px); }
+.does { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(8px, 1.6vh, 14px); }
+.does li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; }
+.does .ic { width: 34px; height: 34px; border-radius: 8px; background: var(--teal-tint); color: var(--teal); display: grid; place-items: center; font: 700 14px var(--mono); }
+.does strong { display: block; color: var(--head); font-size: 17px; }
+.does span.t { color: var(--muted); font-size: 15px; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 14px; }
+.fact { background: var(--card); border: 1px solid var(--rule); border-radius: var(--r); padding: 20px 20px 18px; display: grid; gap: 8px; align-content: start; }
+.fact .n { font-size: clamp(32px, 3.4vw, 46px); font-weight: 800; color: var(--head); line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.fact .l { font-size: 14.5px; color: var(--muted); line-height: 1.4; }
+.logos-wrap { display: grid; gap: 12px; padding-top: clamp(14px, 2.4vh, 22px); border-top: 1px solid var(--rule); }
+.logos-wrap > b { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.logos { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 18px 28px; }
+.logo { display: flex; align-items: center; gap: 10px; color: var(--muted); font-weight: 700; font-size: 19px; }
+.logo svg { width: 26px; height: 26px; flex: none; }
+.cite { font-size: 12.5px; color: var(--muted); }
+
+/* ---------- S2 timeline ---------- */
+.track { position: relative; padding: 4px 0 0; }
+.axis { display: grid; grid-template-columns: repeat(4, 1fr); font-size: 12px; color: var(--muted); border-top: 1px solid var(--rule); margin-top: 10px; padding-top: 6px; }
+.axis span:last-child { text-align: right; }
+.lane { display: grid; gap: 6px; }
+.lane + .lane { margin-top: 14px; }
+.lane-label { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.rail { height: 30px; border-radius: 6px; background: var(--paper); border: 1px solid var(--rule); position: relative; overflow: hidden; }
+.fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; transition: width .9s cubic-bezier(.2,.7,.2,1); display: flex; align-items: center; padding-left: 10px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.fill.today { background: repeating-linear-gradient(135deg, var(--warn-tint) 0 10px, var(--amber-tint) 10px 20px); color: var(--warn); }
+.fill.plaid { background: var(--good-tint); color: var(--good); }
+.range { position: absolute; top: 0; bottom: 0; border-left: 2px dashed var(--warn); }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: st; }
+.steps li { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--rule); counter-increment: st; }
+.steps li::before { content: counter(st); font: 500 13px var(--mono); color: var(--muted); }
+.steps li .when { font: 500 13px var(--mono); color: var(--muted); white-space: nowrap; }
+.steps li.bad .when { color: var(--bad); }
+.steps li.good .when { color: var(--good); }
+.stat { display: grid; gap: 2px; }
+.stat .n { font-size: 34px; font-weight: 800; color: var(--head); line-height: 1; font-variant-numeric: tabular-nums; }
+.pains li { display: grid; gap: 4px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+.pains li:last-child { border-bottom: 0; padding-bottom: 0; }
+
+/* ---------- S3 requirement map ---------- */
+.reqs { display: grid; gap: 8px; }
+.req { text-align: left; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: center; background: var(--card); border: 1px solid var(--rule); border-radius: var(--r); padding: 12px 14px; cursor: pointer; }
+.req .ix { font: 500 13px var(--mono); color: var(--muted); }
+.req strong { font-weight: 700; }
+.req .kind { grid-column: 2; font-size: 13px; color: var(--muted); }
+.req[aria-selected="true"] { border-color: var(--teal); box-shadow: inset 4px 0 0 var(--teal); background: var(--teal-tint); }
+.panel { background: var(--card); border: 1px solid var(--rule); border-radius: var(--r); padding: 22px; display: grid; gap: 16px; align-content: start; min-height: 100%; }
+.panel .prod { display: flex; flex-wrap: wrap; gap: 6px; }
+.panel .prod span { font: 500 13px var(--mono); background: var(--navy); color: var(--on-navy); padding: 3px 9px; border-radius: 5px; }
+.panel dl { margin: 0; display: grid; gap: 12px; }
+.panel dt { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: var(--muted); }
+.panel dd { margin: 2px 0 0; }
+
+/* ---------- S4 claimant paths ---------- */
+.path { display: grid; gap: 14px; align-content: start; }
+.path .who-is { display: grid; gap: 4px; }
+.path .who-is .muted { font-size: 14px; }
+.route { list-style: none; margin: 0; padding: 0; display: grid; }
+.route li { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--rule); font-size: 15px; }
+.route li b { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding-top: 2px; }
+.route li small { display: block; color: var(--muted); font-size: 13.5px; }
+.path .end { display: grid; gap: 8px; justify-items: start; padding-top: 12px; border-top: 1px solid var(--rule); }
+
+/* ---------- S5 simulator ---------- */
+.sim { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; }
+.ctrl { display: grid; gap: 16px; }
+.field { display: grid; gap: 6px; }
+.field label, .field .lbl { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display: flex; justify-content: space-between; }
+.field output { font: 600 15px var(--mono); color: var(--ink); text-transform: none; letter-spacing: 0; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+input[type="range"] { width: 100%; accent-color: var(--teal); }
+select { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; width: 100%; }
+.verdict { display: grid; gap: 14px; align-content: start; }
+.scale { position: relative; height: 54px; margin-top: 4px; }
+.scale .bg { position: absolute; left: 0; right: 0; top: 18px; height: 14px; border-radius: 7px; overflow: hidden; display: flex; }
+.scale .bg i { display: block; height: 100%; }
+.scale .mark { position: absolute; top: 12px; height: 26px; width: 2px; background: var(--ink); }
+.scale .mark span { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); font: 500 11px var(--mono); color: var(--muted); white-space: nowrap; }
+.scale .mark.applies { width: 3px; background: var(--teal); }
+.scale .mark.applies span { color: var(--teal); font-weight: 700; }
+#apiCode { max-height: 300px; overflow: auto; }
+.scale .you { position: absolute; top: 0; transform: translateX(-50%); font: 700 12px var(--mono); color: var(--ink); transition: left .25s; white-space: nowrap; }
+.scale .you::after { content: ""; display: block; width: 0; height: 0; margin: 2px auto 0; border: 6px solid transparent; border-top-color: var(--ink); }
+.why { display: grid; gap: 8px; }
+.why div { display: grid; grid-template-columns: 96px 1fr; gap: 10px; font-size: 15px; }
+.why b { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding-top: 2px; }
+.rules { display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; font-size: 14px; }
+.rules b { font-family: var(--mono); text-align: right; }
+
+/* ---------- S6 lifecycle & exceptions ---------- */
+.life { display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; }
+.life .st { flex: 1 1 130px; background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 4px; position: relative; }
+.life .st b { font-size: 14px; }
+.life .st code { font: 500 12px var(--mono); color: var(--teal); word-break: break-word; }
+.life .st.key { border-color: var(--good); background: var(--good-tint); }
+.exc { display: grid; gap: 8px; }
+.exc details { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; }
+.exc summary { list-style: none; cursor: pointer; padding: 12px 14px; display: grid; grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1fr) 18px; gap: 12px; align-items: center; }
+.exc summary::-webkit-details-marker { display: none; }
+.exc summary::after { content: "+"; font: 600 16px var(--mono); color: var(--muted); text-align: right; }
+.exc details[open] summary::after { content: "–"; }
+.exc .hdr { display: grid; grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1fr) 18px; gap: 12px; padding: 0 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.exc .body { padding: 0 14px 14px; display: grid; gap: 10px; }
+.exc .says { font-size: 14px; }
+.exc .says q { font-style: italic; quotes: "“" "”"; }
+pre.code { margin: 0; background: var(--code-bg); color: var(--code-fg); border-radius: 8px; padding: 14px 16px; font: 13px/1.55 var(--mono); overflow-x: auto; white-space: pre; }
+pre.code .k { color: var(--code-key); } pre.code .s { color: var(--code-str); } pre.code .n { color: var(--code-num); } pre.code .c { color: #7c8a99; }
+.hooks { display: flex; flex-wrap: wrap; gap: 6px; }
+.hooks code { font: 500 12.5px var(--mono); background: var(--info-tint); color: var(--info); padding: 3px 8px; border-radius: 5px; }
+
+/* ---------- S7 architecture ---------- */
+.arch { display: grid; grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1.25fr) 34px minmax(0, 1fr); align-items: center; gap: 6px; }
+.box { background: var(--card); border: 1.5px solid var(--rule); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
+.box b { color: var(--head); }
+.box ul { margin: 4px 0 0; padding-left: 18px; font-size: 13.5px; color: var(--muted); }
+.box.mid { border-color: var(--teal); box-shadow: 0 0 0 4px var(--teal-tint); }
+.box.plaid { background: var(--navy); color: var(--on-navy); border-color: var(--navy); }
+.box.plaid b { color: var(--on-navy); }
+.box.plaid ul { color: var(--on-navy); opacity: .82; }
+.stack { display: grid; gap: 10px; }
+.arrow { text-align: center; color: var(--teal); font: 600 20px var(--mono); line-height: 1; }
+.arrow small { display: block; font-size: 10px; color: var(--muted); font-weight: 500; margin-top: 2px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--rule); }
+.tab { border: 0; background: none; padding: 8px 12px; font: 500 13px var(--mono); color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.tab[aria-selected="true"] { color: var(--teal); border-bottom-color: var(--teal); }
+.codewrap { position: relative; display: grid; gap: 8px; }
+.codehead { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; }
+.copy { font-size: 12px; padding: 4px 10px; }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; font-size: 14.5px; }
+.checks li { display: grid; grid-template-columns: 20px 1fr; gap: 8px; }
+.checks li::before { content: "✓"; color: var(--good); font-weight: 800; }
+
+/* ---------- S8 rollout ---------- */
+.phases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.phase { background: var(--card); border: 1px solid var(--rule); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 6px; align-content: start; border-top: 4px solid var(--teal); }
+.phase.later { border-top-color: var(--rule); }
+.phase .when { font: 500 12px var(--mono); color: var(--muted); }
+.phase ul { margin: 0; padding-left: 18px; font-size: 14px; display: grid; gap: 3px; }
+.est { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.est .outs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start; }
+.est .o { background: var(--paper); border-radius: 8px; padding: 12px 14px; display: grid; gap: 2px; }
+.est .o .n { font-size: 28px; font-weight: 800; color: var(--head); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.est .o span { font-size: 13px; color: var(--muted); }
+.assume { font-size: 12.5px; color: var(--muted); }
+input[type="number"] { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 10px; width: 100%; font-variant-numeric: tabular-nums; }
+
+/* ---------- pager & notes ---------- */
+.pager { border-top: 1px solid var(--rule); background: var(--card); padding-block: 8px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; align-items: center; gap: 12px; }
+.dots { display: flex; gap: 6px; flex: 1; justify-content: center; flex-wrap: wrap; }
+.dot { width: 30px; height: 6px; border-radius: 3px; border: 0; background: var(--rule); cursor: pointer; padding: 0; }
+.dot[aria-current="true"] { background: var(--teal); }
+.nav { border: 1px solid var(--rule); background: var(--card); border-radius: 8px; padding: 6px 14px; cursor: pointer; font-weight: 600; }
+.nav:disabled { opacity: .4; cursor: default; }
+.count { font: 500 13px var(--mono); color: var(--muted); min-width: 52px; text-align: center; }
+.notes { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(64px + env(safe-area-inset-bottom, 0px)); width: min(420px, calc(100% - 32px)); max-height: 55%; overflow: auto; background: var(--card); border: 1px solid var(--rule); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.18); padding: 16px 18px; z-index: 20; font-size: 14.5px; display: grid; gap: 8px; }
+.notes h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--teal); display: flex; justify-content: space-between; }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+aside.src { display: none; }
+.hint { font-size: 12.5px; color: var(--muted); }
+
+@media (max-width: 900px) {
+  .g3, .g2, .split, .sim, .est, .phases { grid-template-columns: minmax(0, 1fr); }
+  .phases { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .arch { grid-template-columns: minmax(0, 1fr); }
+  .arch .arrow { transform: rotate(90deg); }
+  .arch .arrow small { transform: rotate(-90deg); }
+  .exc summary, .exc .hdr { grid-template-columns: 1fr 18px; }
+  .exc summary > :nth-child(2), .exc summary > :nth-child(3), .exc .hdr { display: none; }
+  .lens { margin-left: 0; }
+  .glance-top { grid-template-columns: minmax(0, 1fr); }
+  .logos { justify-content: flex-start; }
+}
+@media (max-width: 520px) {
+  .facts { grid-template-columns: minmax(0, 1fr); }
+  .phases, .est .outs { grid-template-columns: minmax(0, 1fr); }
+  .dot { width: 18px; }
+  .brand .full { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="app" id="app" data-lens="all">
+  <header class="bar">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="none" stroke="#e3a33b" stroke-width="1.6"/><path d="M4 18 L10 10 L13 14 L16 9 L22 18 Z" fill="#0e7c7b"/><path d="M4 18 H22" stroke="#e3a33b" stroke-width="1.6"/></svg>
+      <span>Ascend <span class="full">Dept. of Benefits</span> × Plaid</span>
+    </div>
+    <div class="lens" role="group" aria-label="Stakeholder lens" hidden>
+      <span>Lens</span>
+      <button class="chip" data-lens="all" aria-pressed="true">Everyone</button>
+      <button class="chip" data-lens="ben" aria-pressed="false">Benefits Admin</button>
+      <button class="chip" data-lens="fraud" aria-pressed="false">Fraud Ops</button>
+      <button class="chip" data-lens="cx" aria-pressed="false">Constituent Exp.</button>
+      <button class="chip" data-lens="cio" aria-pressed="false">CIO</button>
+    </div>
+    <div class="tools">
+      <button class="tool" id="notesBtn" aria-pressed="false" hidden>Notes</button>
+      <button class="tool" id="fsBtn" title="Full screen (F)">Present</button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+
+    <!-- ============ 1. TITLE ============ -->
+    <section class="slide" id="s1" aria-label="Title">
+      <div class="hero">
+        <div class="kicker">Technical solution review · Account verification suite</div>
+        <h1>Approved today.<br><em>Paid today.</em></h1>
+        <p class="lede">How Ascend verifies a claimant's bank account in seconds, confirms the account belongs to them, and sends only payment-ready accounts to disbursement, using Plaid Link, Auth and Identity Match.</p>
+      </div>
+      <div class="grid g3">
+        <div class="card outcome" data-for="ben">
+          <span class="tag">Benefits Administration</span>
+          <div class="big">Seconds, not 1–3 days</div>
+          <p class="muted">Most claimants are verified while they're still on the page, so payments go out the same day.</p>
+        </div>
+        <div class="card outcome" data-for="fraud">
+          <span class="tag">Program Integrity &amp; Fraud Ops</span>
+          <div class="big">The account is theirs</div>
+          <p class="muted">Every account is matched to the claimant's record before money moves. Ascend sets the thresholds.</p>
+        </div>
+        <div class="card outcome" data-for="cx">
+          <span class="tag">Constituent Experience</span>
+          <div class="big">Nobody is forced to log in</div>
+          <p class="muted">Bank login, typed numbers or a prepaid card. Every path ends with a clear next step.</p>
+        </div>
+      </div>
+      <div class="agenda">
+        <span><b>1</b> Plaid at a glance</span>
+        <span><b>2</b> What we heard</span>
+        <span><b>3</b> Requirements → solution</span>
+        <span><b>4</b> Every claimant's path</span>
+        <span class="live">● Live demo</span>
+        <span><b>5</b> Ownership rules</span>
+        <span><b>6</b> Exceptions</span>
+        <span><b>7</b> Architecture</span>
+        <span><b>8</b> Rollout</span>
+      </div>
+      <aside class="src">
+        <li>Open: thank everyone, confirm roles (Director of Benefits Admin, Program Integrity &amp; Fraud Ops, Head of Constituent Experience, CIO).</li>
+        <li>Frame the goal in one line: get approved claimants paid faster without paying the wrong person.</li>
+        <li>Agenda: about 8 min of slides, 14 min live demo, 10 min architecture and rollout, rest Q&amp;A.</li>
+        <li>Ask each stakeholder what a win looks like in 6 months. Write it down and come back to it on the last slide.</li>
+      </aside>
+    </section>
+
+    <!-- ============ 2. PLAID AT A GLANCE ============ -->
+    <section class="slide glance" id="s2" aria-label="Plaid at a glance" hidden>
+      <div class="kicker">Plaid at a glance</div>
+      <div class="glance-top">
+        <div class="lead">
+          <h2>The network that connects people's bank accounts to the apps and services they use.</h2>
+          <ul class="does">
+            <li><span class="ic">01</span><div><strong>Connects</strong><span class="t">People link their bank in a few taps, logging in on their bank's own screen. The app never sees their password.</span></div></li>
+            <li><span class="ic">02</span><div><strong>Verifies</strong><span class="t">Confirms the account and routing numbers are real and the account is open, instantly.</span></div></li>
+            <li><span class="ic">03</span><div><strong>Confirms ownership</strong><span class="t">Checks the account belongs to the person, against the name, address, phone and email on file.</span></div></li>
+          </ul>
+        </div>
+        <div class="facts">
+          <div class="fact"><span class="n">1 in 2</span><span class="l">people with a US bank account have used Plaid</span></div>
+          <div class="fact"><span class="n">12,000+</span><span class="l">financial institutions supported</span></div>
+          <div class="fact"><span class="n">9,000+</span><span class="l">fintechs built on Plaid</span></div>
+          <div class="fact"><span class="n">1M+</span><span class="l">connections every day</span></div>
+        </div>
+      </div>
+      <div class="logos-wrap"><b>Built on Plaid</b>
+        <div class="logos">
+          <div class="logo"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M2.84 24h.53c.096 0 .192-.048.224-.128C7.591 13.696 11.94 8.656 14.67 5.638c.112-.128.064-.225-.096-.225h-4.88a.55.55 0 0 0-.45.225L5.746 9.972c-.514.642-.642 1.236-.642 2.086v4.43c-1.14 3.194-1.862 5.361-2.392 7.32-.032.125.016.192.129.192M20.447.646c-.754-.802-4.157-.834-5.73-.224a3 3 0 0 0-.786.465 41 41 0 0 0-3.323 3.178c-.112.113-.064.225.097.225h5.409c.497 0 .786.289.786.786v6.1c0 .16.128.208.225.064l3.258-4.254c.53-.69.69-.898.835-1.861.192-1.413.08-3.58-.77-4.479m-6.982 16.18 2.231-3.676a.7.7 0 0 0 .064-.29V6.73c0-.16-.112-.225-.224-.097-3.355 3.74-5.971 7.672-8.395 12.407-.06.12.016.225.16.177l5.009-1.54c.565-.174.882-.402 1.155-.852"/></svg><span>Robinhood</span></div>
+          <div class="logo"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12.006 0L1.086 8.627v3.868c3.386-2.013 11.219-5.13 14.763-6.015.11-.024.16.005.227.078.372.427 1.586 1.899 1.916 2.301a.128.128 0 0 1-.03.195 43.607 43.607 0 0 0-6.67 6.527c-.03.037-.006.043.012.03 2.642-1.134 8.828-2.94 11.622-3.452V8.627zm-.48 11.177c-2.136.708-8.195 3.307-10.452 4.576V24h21.852v-7.936c-2.99.506-11.902 3.16-15.959 5.246a.183.183 0 0 1-.23-.036l-2.044-2.429c-.055-.061-.062-.098.011-.208 1.574-2.3 4.789-5.899 6.833-7.418.042-.03.031-.06-.012-.042Z"/></svg><span>Zillow</span></div>
+          <div class="logo"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M21.6236 4.0792l-4.2223 3.0705c-.6695.4892-.8127 1.4224-.3309 2.0922.4892.6698 1.4221.8128 2.0921.3312l4.2219-3.0706c.67-.4892.8127-1.4224.3313-2.0922a1.4883 1.4883 0 0 0-2.092-.3312zm-9.6483-1.1816c-.8278 0-1.4978.6698-1.4978 1.4976v2.5212c0 .8279.67 1.4977 1.4978 1.4977.8279 0 1.4974-.6698 1.4974-1.4977V4.3952c0-.8278-.6695-1.4976-1.4974-1.4976zM.2877 4.4103c-.4892.6698-.3387 1.603.3308 2.0922L4.841 9.573c.6695.4891 1.6029.3386 2.092-.3312.4893-.6698.3387-1.603-.3313-2.0922L2.3798 4.0792c-.6773-.4817-1.6107-.3387-2.092.331zm3.695 7.7893C6.1051 10.303 8.905 9.144 11.9753 9.144c3.0705 0 5.8702 1.159 7.9926 3.0555zm14.5556 1.6335c-1.3473 0-2.236.4433-2.8004.9926-.5948.587-1.0232 1.5058-1.0232 2.6497 0 1.302.5646 2.1445 1.0089 2.5885.843.843 1.926 1.0385 2.829 1.0385 1.4827 0 2.2804-.4586 2.7843-.9478.5043-.4892.7234-1.024.8284-1.4078H19.825c-.1056.2107-.279.3687-.4296.459-.3083.1656-.7368.1814-.797.1814-.5492 0-.8583-.1883-1.0088-.3388-.2933-.286-.4296-.7757-.4296-1.1445h5.095v-.2634c0-.7601-.12-1.9567-1.0833-2.8749-.8132-.7676-1.8358-.9325-2.6334-.9325zm.0601 1.5577c.241 0 .6845.0448 1.008.3684.1881.1882.3384.4744.399.7378h-2.77c.0455-.3085.2038-.5572.3694-.7378.2561-.2634.5797-.3684.9936-.3684zm-16.851-1.3549h2.446v.8279c.5795-.7 1.377-.9483 2.047-.9483.4893 0 .9482.1054 1.3171.3086.5044.2634.783.6397.948.9783.2786-.4892.6251-.7827.9335-.9482.4892-.2785.9632-.3387 1.4226-.3387.5038 0 1.3317.0753 1.8961.6247.61.5945.6397 1.4073.6397 1.8814v4.4553h-2.4459v-3.379c0-.7226-.0753-1.2117-.3533-1.4676-.1359-.1204-.324-.2258-.6397-.2258-.2786 0-.5044.0753-.7228.2785-.414.3988-.4437.9633-.4437 1.302v3.507H6.346v-3.3791c0-.6548-.0454-1.1816-.324-1.4676-.2106-.2258-.4891-.2784-.7374-.2784-.2634 0-.474.0451-.6695.2483-.429.414-.429 1.0687-.429 1.4977v3.3791H1.74v-6.856Z"/></svg><span>GoFundMe</span></div>
+          <div class="logo"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M18.69 2.319a3.868 3.868 0 0 0-3.108 1.547l-.759 1.007a1.658 1.658 0 0 1-1.313.656H0V21.68h5.296a3.87 3.87 0 0 0 3.108-1.547l.759-1.006a1.656 1.656 0 0 1 1.313-.657H24V2.319h-5.31Zm1.108 11.949h-5.66a3.87 3.87 0 0 0-3.108 1.547l-.759 1.007a1.658 1.658 0 0 1-1.313.656H4.202V9.731h5.661a3.868 3.868 0 0 0 3.107-1.547l.759-1.006a1.658 1.658 0 0 1 1.313-.657h4.771l-.015 7.747Z"/></svg><span>Brex</span></div>
+          <div class="logo"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M22.3977 7.0896h-2.3106V.0676l-7.5094 6.3542V.1577h-1.1554v6.1966L4.4904 0v7.0896H1.6023v10.3976h2.8882V24l6.932-6.3591v6.2005h1.1554v-6.0469l6.9318 6.1807v-6.4879h2.8882V7.0896zm-3.4657-4.531v4.531h-5.355l5.355-4.531zm-13.2862.0676 4.8691 4.4634H5.6458V2.6262zM2.7576 16.332V8.245h7.8476l-6.1149 6.1147v1.9723H2.7576zm2.8882 5.0404v-3.8852h.0001v-2.6488l5.7763-5.7764v7.0111l-5.7764 5.2993zm12.7086.0248-5.7766-5.1509V9.0618l5.7766 5.7766v6.5588zm2.8882-5.0652h-1.733v-1.9723L13.3948 8.245h7.8478v8.087z"/></svg><span>Perplexity</span></div>
+        </div>
+      </div>
+      <p class="cite">Source: plaid.com (company page, homepage, 2025 annual letter and customer stories). Logos: Simple Icons.</p>
+      <aside class="src">
+        <li>Keep it to 30 seconds. The point is legitimacy: claimants have very likely used Plaid already.</li>
+        <li>Say "people with a US bank account", not "US adults". That's Plaid's exact wording.</li>
+        <li>Logos: all five have published customer stories on plaid.com, so the claim holds up if anyone checks.</li>
+        <li>Bridge: "Ascend doesn't need a new bank network. Its claimants are already on this one."</li>
+      </aside>
+    </section>
+
+    <!-- ============ 3. WHAT WE HEARD ============ -->
+    <section class="slide" id="s3" aria-label="What we heard" hidden>
+      <div class="kicker">What we heard <span class="for">from the discovery call</span></div>
+      <h2>Every claimant waits, and a quarter of them need a caseworker.</h2>
+      <div class="split">
+        <div class="card" style="display:grid;gap:14px">
+          <div class="btn-row" role="group" aria-label="Compare enrollment">
+            <button class="btn" data-tl="today" aria-pressed="true">Today: typed numbers + micro-deposits</button>
+            <button class="btn" data-tl="plaid" aria-pressed="false">With Plaid</button>
+          </div>
+          <div class="track" aria-hidden="true">
+            <div class="lane">
+              <div class="lane-label"><span>Approval → payment-ready</span><span class="muted tnum" id="tlLabel">1–3 business days</span></div>
+              <div class="rail"><div class="fill today" id="tlFill" style="width:100%">waiting on micro-deposits</div><div class="range" id="tlRange" style="left:33.3%"></div></div>
+            </div>
+            <div class="axis"><span>Day 0</span><span>Day 1</span><span>Day 2</span><span>Day 3</span></div>
+          </div>
+          <ol class="steps" id="tlSteps"></ol>
+        </div>
+        <div class="grid" style="gap:14px">
+          <div class="grid g2">
+            <div class="card stat" data-for="ben cx"><span class="n">1–3 days</span><span class="muted small">verification delay before the first payment</span></div>
+            <div class="card stat" data-for="ben"><span class="n">~25%</span><span class="muted small">of approved claimants need manual help to enroll</span></div>
+          </div>
+          <div class="card">
+            <ul class="clean pains">
+              <li data-for="ben"><strong>Claimants drop off after approval</strong><span class="muted small">Some never finish direct-deposit enrollment.</span></li>
+              <li data-for="fraud"><strong>Ownership is barely checked</strong><span class="muted small">Account takeover, invalid accounts and diverted public funds.</span></li>
+              <li data-for="ben fraud"><strong>ACH returns and reissues</strong><span class="muted small">Closed or stale accounts mean reconciliation work and support calls.</span></li>
+              <li data-for="fraud ben"><strong>Manual review for every exception</strong><span class="muted small">Mismatched owners and failed verification all land on a caseworker.</span></li>
+              <li data-for="cx"><strong>Hard for claimants</strong><span class="muted small">Finding and typing routing numbers is a barrier for accessibility and digital literacy.</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <aside class="src">
+        <li>Play back their words, not ours. Toggle "With Plaid" only after you've confirmed the pain is right.</li>
+        <li>Check: "Is 25% manual intervention still the right number? Which program is worst?"</li>
+        <li>Fraud Ops: ask how account-change fraud shows up today (claimant calls saying "I never got paid").</li>
+        <li>CX: ask about mobile share and Spanish-speaking claimants.</li>
+      </aside>
+    </section>
+
+    <!-- ============ 3. REQUIREMENTS MAP ============ -->
+    <section class="slide" id="s4" aria-label="Requirements to solution" hidden>
+      <div class="kicker">Requirements → solution <span class="for">select a requirement</span></div>
+      <h2>Each requirement maps to a specific part of the suite.</h2>
+      <div class="split" style="grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)">
+        <div class="reqs" role="tablist" aria-label="Requirements" id="reqList"></div>
+        <div class="panel" role="tabpanel" id="reqPanel" aria-live="polite"></div>
+      </div>
+      <aside class="src">
+        <li>Click through in order; let each stakeholder react to theirs.</li>
+        <li>Be clear on scope: Signal and Identity Verification are out of scope here. Transfer is part of the broader roadmap, not this solution.</li>
+        <li>Key point for the CIO: Plaid returns facts and scores; the decision lives in Ascend's middleware.</li>
+      </aside>
+    </section>
+
+    <!-- ============ 4. CLAIMANT PATHS ============ -->
+    <section class="slide" id="s5" aria-label="Every claimant's path" hidden>
+      <div class="kicker">Three claimants, three paths <span class="for">what the live demo runs</span></div>
+      <h2>Same flow. Three claimants. Three different outcomes.</h2>
+      <div class="grid g3">
+        <div class="card path" data-for="cx ben">
+          <div class="who-is"><span class="tag">John · won't log in</span><h3>John Smith</h3><span class="muted">Cash assistance, $480/mo</span></div>
+          <ol class="route">
+            <li><b>Connects</b><span>Types account + routing<small>no bank login</small></span></li>
+            <li><b>Verified</b><span>Database Auth: pass<small>checked on Plaid's network</small></span></li>
+            <li><b>Owner</b><span>Database Auth name check<small>name 100</small></span></li>
+          </ol>
+          <div class="end"><span class="pill s-ready">Payment ready</span><span class="muted small">Still instant, flagged as loginless.</span></div>
+        </div>
+        <div class="card path" data-for="ben cx">
+          <div class="who-is"><span class="tag">Dana · new enrollment</span><h3>Dana Reyes</h3><span class="muted">Emergency relief, $1,200</span></div>
+          <ol class="route">
+            <li><b>Connects</b><span>Logs in to her bank<small>Plaid Link</small></span></li>
+            <li><b>Verified</b><span>Instant Auth<small>numbers come from the bank</small></span></li>
+            <li><b>Owner</b><span>Identity Match<small>name 99 · contact 100</small></span></li>
+          </ol>
+          <div class="end"><span class="pill s-ready">Payment ready</span><span class="muted small">About a minute, no numbers typed.</span></div>
+        </div>
+        <div class="card path" data-for="fraud">
+          <div class="who-is"><span class="tag">Dana · deposit change</span><h3>Someone with Dana's password</h3><span class="muted">Tries to redirect her $1,200</span></div>
+          <ol class="route">
+            <li><b>Connects</b><span>Logs in to their own bank<small>Plaid Link</small></span></li>
+            <li><b>Verified</b><span>Instant Auth<small>the account is real</small></span></li>
+            <li><b>Owner</b><span>Identity Match<small>name 0 · deposit changes need 85</small></span></li>
+          </ol>
+          <div class="end"><span class="pill s-hold">Fraud hold</span><span class="muted small">Payments stay on the account on file.</span></div>
+        </div>
+      </div>
+      <div style="display:grid;gap:8px;justify-items:start">
+        <a class="go" href="http://localhost:3000" target="_blank" rel="noopener">Open the live demo →</a>
+        <p class="hint">The demo app runs locally on the presenter's laptop from a private GitHub repository, so this link only works on that laptop.</p>
+      </div>
+      <aside class="src">
+        <li>Walk left to right, one line each, then switch to the live demo and run the same three.</li>
+        <li>Demo order (about 11 min): Dana happy path → API inspector → John loginless → deposit-change attack → Agency console → pre-disbursement check.</li>
+        <li>CX point: three choices on the first screen. Nobody is pushed into a bank login.</li>
+        <li>Fraud point: the attacker's account is real, so verification alone passes it. Ownership is what stops it.</li>
+      </aside>
+    </section>
+
+    <!-- ============ 5. OWNERSHIP RULES ============ -->
+    <section class="slide" id="s6" aria-label="Ownership rules" hidden>
+      <div class="kicker">Ownership &amp; payment integrity <span class="for">try the rules</span></div>
+      <h2>Plaid returns the scores. Ascend's rules make the decision.</h2>
+      <div class="sim">
+        <div class="card ctrl" data-for="fraud ben cio">
+          <div class="field"><span class="lbl">Load a claimant</span>
+            <div class="seg" id="presets"></div>
+          </div>
+          <div class="field"><span class="lbl">What's happening</span>
+            <div class="seg" role="group" aria-label="Scenario">
+              <button class="btn" data-sc="new" aria-pressed="true">New enrollment</button>
+              <button class="btn" data-sc="change" aria-pressed="false">Changing deposit account</button>
+            </div>
+          </div>
+          <div class="field"><label for="vm">Verification result</label>
+            <select id="vm">
+              <option value="instant">Instant Auth: verified by the bank</option>
+              <option value="db_pass">Database Auth: pass</option>
+              <option value="db_caution">Database Auth: pass with caution</option>
+              <option value="md_pending">Micro-deposit sent, waiting for code</option>
+              <option value="failed">Verification failed or expired</option>
+            </select>
+          </div>
+          <div class="field"><label for="ns">Owner name score <output id="nsOut" for="ns">99</output></label>
+            <input type="range" id="ns" min="0" max="100" value="99">
+          </div>
+          <div class="field"><label for="cs">Best of address / phone / email <output id="csOut" for="cs">100</output></label>
+            <input type="range" id="cs" min="0" max="100" value="100">
+          </div>
+        </div>
+        <div class="card verdict" aria-live="polite">
+          <div><span class="pill s-ready" id="vPill">Payment ready</span></div>
+          <div class="scale" aria-hidden="true">
+            <div class="you" id="vYou" style="left:99%">99</div>
+            <div class="bg"><i style="width:50%;background:var(--bad-tint)"></i><i style="width:20%;background:var(--warn-tint)"></i><i style="width:15%;background:var(--good-tint)"></i><i style="width:15%;background:var(--good-tint)"></i></div>
+            <div class="mark" style="left:50%"><span>50 review</span></div>
+            <div class="mark" id="m70" style="left:70%"><span>70 enroll</span></div>
+            <div class="mark" id="m85" style="left:85%"><span>85 change</span></div>
+          </div>
+          <div class="why">
+            <div><b>Why</b><span id="vWhy"></span></div>
+            <div><b>Next</b><span id="vNext"></span></div>
+            <div><b>Method</b><span id="vMethod"></span></div>
+          </div>
+          <div style="border-top:1px solid var(--rule);padding-top:12px;display:grid;gap:8px">
+            <h3 style="font-size:15px">Ascend's payment-integrity rules</h3>
+            <div class="rules">
+              <span>Owner name match, new enrollment</span><b>≥ 70</b>
+              <span>Owner name match, deposit change</span><b>≥ 85</b>
+              <span>Possible match → human review</span><b>50–69</b>
+              <span>Address, phone or email also matches</span><b>≥ 70</b>
+              <span>Accept "pass with caution"</span><b>no</b>
+            </div>
+            <p class="hint">70 is Plaid's recommended starting point for name match. Every threshold is Ascend's to tune per program.</p>
+          </div>
+        </div>
+      </div>
+      <aside class="src">
+        <li>Hand this slide to Fraud Ops. Ask them to pick a number they'd be comfortable with.</li>
+        <li>Load "Attacker": real account, name 0 (mock mode shows 18). On a deposit change the bar is 85, so it's held and payments stay on the account on file.</li>
+        <li>Load "Spouse's account": 62 is a possible match. A person decides, with the scores and reason in front of them.</li>
+        <li>The same logic is the decide() function in the demo's server.js. Nothing here is a black box.</li>
+      </aside>
+    </section>
+
+    <!-- ============ 6. EXCEPTIONS ============ -->
+    <section class="slide" id="s7" aria-label="Disbursement readiness and exceptions" hidden>
+      <div class="kicker">Disbursement readiness &amp; exceptions</div>
+      <h2>Nothing pays out until the account is ready, and every exception has an owner.</h2>
+      <div class="life" data-for="ben cio">
+        <div class="st"><b>Linked</b><code>/item/public_token/exchange</code></div>
+        <div class="st"><b>Account verified</b><code>/auth/get</code></div>
+        <div class="st"><b>Owner matched</b><code>/identity/match</code></div>
+        <div class="st key"><b>Payment ready</b><code>/processor/token/create</code></div>
+        <div class="st"><b>Pre-disbursement check</b><code>/auth/get again before each run</code></div>
+        <div class="st"><b>Paid</b><span class="small muted">by Ascend's payment platform</span></div>
+      </div>
+      <div class="exc">
+        <div class="hdr"><span>Status</span><span>What triggers it</span><span>Who owns it</span><span></span></div>
+        <details data-for="cx ben">
+          <summary><span class="pill s-pending">Pending deposit</span><span>Database Auth couldn't confirm the numbers; a Same-Day micro-deposit was sent</span><span>Claimant, with reminders</span></summary>
+          <div class="body">
+            <p class="says">Claimant sees: <q>Look for a deposit from Plaid in your bank account today. Come back and enter the 3-letter code.</q></p>
+            <pre class="code"><span class="k">"event"</span>: <span class="s">"case.pending_verification"</span>, <span class="k">"verification_status"</span>: <span class="s">"pending_manual_verification"</span>, <span class="k">"next"</span>: <span class="s">"Claimant enters the code from their bank statement"</span></pre>
+          </div>
+        </details>
+        <details data-for="ben fraud">
+          <summary><span class="pill s-review">Needs review</span><span>Possible match (50–69), "pass with caution", or name matches but no contact detail does</span><span>Caseworker queue, with the reason code</span></summary>
+          <div class="body">
+            <p class="says">Claimant sees: <q>We need one more step to confirm this account. We'll contact you within 2 business days.</q></p>
+            <pre class="code"><span class="k">"outcome"</span>: <span class="s">"NEEDS_REVIEW"</span>, <span class="k">"reason"</span>: <span class="s">"Possible match (name 62): relative, joint account or name change"</span>, <span class="k">"name_score"</span>: <span class="n">62</span>, <span class="k">"name_threshold"</span>: <span class="n">70</span></pre>
+          </div>
+        </details>
+        <details data-for="fraud">
+          <summary><span class="pill s-hold">Fraud hold</span><span>Owner name below the threshold, most importantly on a deposit-account change</span><span>Program Integrity</span></summary>
+          <div class="body">
+            <p class="says">Claimant sees: <q>We couldn't make this change.</q> Payments stay on the account on file, and the claimant is notified at the contact details already on file.</p>
+            <pre class="code"><span class="k">"outcome"</span>: <span class="s">"FRAUD_HOLD"</span>, <span class="k">"reason"</span>: <span class="s">"Deposit change to an account owned by someone else (name 0 &lt; 85)"</span>, <span class="k">"amount_protected"</span>: <span class="n">1200</span></pre>
+          </div>
+        </details>
+        <details data-for="ben fraud cio">
+          <summary><span class="pill s-review">Account changed or closed</span><span>A webhook arrives, or the pre-disbursement check finds the account no longer matches</span><span>System moves it back to review before payment</span></summary>
+          <div class="body">
+            <p class="says">This is the step that stops payments into closed accounts, the source of R02/R03/R04 returns and reissues.</p>
+            <div class="hooks"><code>AUTH: AUTOMATICALLY_VERIFIED</code><code>AUTH: VERIFICATION_EXPIRED</code><code>AUTH: DEFAULT_UPDATE</code><code>ITEM: ERROR</code><code>ITEM: USER_PERMISSION_REVOKED</code></div>
+          </div>
+        </details>
+      </div>
+      <aside class="src">
+        <li>Benefits Admin: the queue now contains only real exceptions, each with a plain-language reason.</li>
+        <li>Open the fraud hold row. Same story as the demo: $1,200 protected, nothing paid out.</li>
+        <li>CIO: every state change is an auditable event. The demo exports the audit trail as JSON.</li>
+        <li>ACH returns: verify before the first payment, then re-check before each disbursement run.</li>
+      </aside>
+    </section>
+
+    <!-- ============ 7. ARCHITECTURE ============ -->
+    <section class="slide" id="s8" aria-label="Architecture" hidden>
+      <div class="kicker">Architecture &amp; integration <span class="for">for the CIO and the systems integrator</span></div>
+      <h2>Plaid plugs into the middleware Ascend already has.</h2>
+      <div class="arch" data-for="cio">
+        <div class="stack">
+          <div class="box"><b>Constituent portal</b><span class="small muted">Mobile-responsive, built by the SI</span><ul><li>Embeds Plaid Link (web or mobile SDK)</li><li>Shows result and next step</li></ul></div>
+        </div>
+        <div class="arrow">⇄<small>REST</small></div>
+        <div class="box mid"><b>Ascend API middleware</b><span class="small muted">The only system that talks to Plaid</span><ul><li>Creates Link tokens with the claimant record</li><li>Calls Auth and Identity Match</li><li>Applies Ascend's decision rules</li><li>Writes the audit log, receives webhooks</li></ul></div>
+        <div class="arrow">⇄<small>HTTPS</small></div>
+        <div class="stack">
+          <div class="box plaid"><b>Plaid API</b><ul><li>Link, Auth, Identity Match</li><li>Webhooks back to Ascend</li></ul></div>
+          <div class="box"><b>Case management</b><span class="small muted">Queue, reason codes, actions</span></div>
+          <div class="box"><b>Payment platform</b><span class="small muted">Gets a processor token, never raw numbers</span></div>
+        </div>
+      </div>
+      <div class="split" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)">
+        <div class="codewrap" data-for="cio">
+          <div class="tabs" role="tablist" id="apiTabs"></div>
+          <div class="codehead"><span id="apiNote" class="muted"></span><button class="btn copy" id="copyBtn">Copy JSON</button></div>
+          <pre class="code" id="apiCode" tabindex="0"></pre>
+        </div>
+        <div class="card" style="display:grid;gap:10px;align-content:start">
+          <h3>Non-functional requirements</h3>
+          <ul class="checks">
+            <li data-for="cio">REST + JSON throughout, with webhooks for status changes</li>
+            <li data-for="cio fraud">Every decision written as an auditable event, exportable</li>
+            <li data-for="cio">Full Sandbox for the SI's build and QA, with test users for each path</li>
+            <li data-for="cio ben">Link tokens are per session, so enrollment surges scale out with the portal</li>
+            <li data-for="cio">Uptime: live status at status.plaid.com; the ≥99.9% commitment goes into the contract</li>
+            <li data-for="cio cx">Procurement packet: security reports (SOC 2 Type II), privacy and data-retention terms, Link accessibility documentation</li>
+            <li data-for="cx">Link in English and Spanish, on web and mobile</li>
+          </ul>
+        </div>
+      </div>
+      <aside class="src">
+        <li>Walk left to right, then open each API tab. These are the exact calls the demo makes.</li>
+        <li>Emphasise: the claimant record is passed at /link/token/create, so Identity Match compares against Ascend's data, not what the claimant types.</li>
+        <li>Processor token: the payment platform never sees full account numbers.</li>
+        <li>Uptime / SLA and security documents: commit to getting the specifics from the AE and security team rather than quoting numbers live.</li>
+      </aside>
+    </section>
+
+    <!-- ============ 8. ROLLOUT ============ -->
+    <section class="slide" id="s9" aria-label="Rollout and success measures" hidden>
+      <div class="kicker">Rollout &amp; how we'll measure it</div>
+      <h2>Start with one program, prove it, then scale.</h2>
+      <div class="phases">
+        <div class="phase" data-for="cio"><span class="when">Phase 1 · Build</span><h3>Sandbox with the SI</h3><ul><li>Link in the portal</li><li>Rules in middleware</li><li>Review queue in case management</li><li>QA every path with Sandbox users</li></ul></div>
+        <div class="phase" data-for="ben fraud"><span class="when">Phase 2 · Pilot</span><h3>Emergency relief</h3><ul><li>Production, one program</li><li>Compare against the micro-deposit cohort</li><li>Tune thresholds with Fraud Ops</li></ul></div>
+        <div class="phase" data-for="ben cx fraud"><span class="when">Phase 3 · Scale</span><h3>All programs</h3><ul><li>Unemployment and cash assistance</li><li>Protect deposit-account changes</li><li>Pre-disbursement checks every run</li></ul></div>
+        <div class="phase later" data-for="ben cio"><span class="when">Broader modernization</span><h3>What comes next</h3><ul><li>Payments via Transfer</li><li>Income checks at renewal</li></ul></div>
+      </div>
+      <div class="card est" data-for="ben">
+        <div class="ctrl">
+          <h3>Pilot impact estimator</h3>
+          <div class="field"><label for="eN">Approved claimants per month</label><input type="number" id="eN" value="8000" min="0" step="500"></div>
+          <div class="field"><label for="eI">Verified instantly (Instant Auth or Database Auth) <output id="eIOut">75%</output></label><input type="range" id="eI" min="30" max="95" value="75"></div>
+          <div class="field"><label for="eR">Still needing manual help <output id="eROut">8%</output></label><input type="range" id="eR" min="0" max="25" value="8"></div>
+          <div class="field"><label for="eM">Caseworker minutes per manual case <output id="eMOut">20</output></label><input type="range" id="eM" min="5" max="60" step="5" value="20"></div>
+          <p class="assume">Today's 25% manual rate is from discovery. The 8,000 claimants is the flood scenario from the demo. Every other value is an assumption to replace with pilot data.</p>
+        </div>
+        <div class="outs">
+          <div class="o"><span>Payment-ready same day</span><b class="n" id="o1">6,000</b></div>
+          <div class="o"><span>Manual cases avoided / month</span><b class="n" id="o2">1,360</b></div>
+          <div class="o"><span>Caseworker hours freed / month</span><b class="n" id="o3">453</b></div>
+          <div class="o"><span>Manual rate, today → pilot</span><b class="n" id="o4">25% → 8%</b></div>
+          <div class="o" style="grid-column:1/-1"><span>We'll also track</span><span style="color:var(--ink);font-size:14.5px">Enrollment completion after approval · median time to payment-ready · ACH return rate (R02, R03, R04) · deposit changes held and confirmed as fraud</span></div>
+        </div>
+      </div>
+      <div class="card" style="display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center">
+        <h3 style="font-size:16px">Next steps</h3>
+        <span class="small">Sandbox keys to the SI</span>
+        <span class="small">Security &amp; procurement packet</span>
+        <span class="small">Choose the pilot program</span>
+        <span class="small">Agree starting thresholds with Program Integrity</span>
+      </div>
+      <aside class="src">
+        <li>Return to the "what does a win look like" answers from slide 1 and map them to these measures.</li>
+        <li>Let the Director move the sliders. Say plainly which numbers are assumptions.</li>
+        <li>Phase 2 pilot is a direct comparison against today's micro-deposit cohort, so the result is Ascend's own data.</li>
+        <li>Close by asking for the pilot program and an owner for each next step.</li>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="pager">
+    <button class="nav" id="prev" aria-label="Previous slide">←</button>
+    <div class="dots" id="dots"></div>
+    <span class="count" id="count">1 / 9</span>
+    <button class="nav" id="next" aria-label="Next slide">→</button>
+  </footer>
+
+  <div class="notes" id="notes" hidden aria-live="polite">
+    <h4><span>Presenter notes</span><span id="notesN"></span></h4>
+    <ul id="notesBody"></ul>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const app = $('#app');
+  const slides = $$('.slide');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let cur = 0;
+
+  /* ---------- navigation ---------- */
+  const dots = $('#dots');
+  slides.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'dot'; b.setAttribute('aria-label', `Slide ${i + 1}: ${s.getAttribute('aria-label')}`);
+    b.onclick = () => go(i);
+    dots.appendChild(b);
+  });
+  function go(i, fromHash) {
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, k) => { s.hidden = k !== i; s.classList.remove('enter'); });
+    void slides[i].offsetWidth; slides[i].classList.add('enter');
+    cur = i;
+    $$('.dot').forEach((d, k) => d.setAttribute('aria-current', k === i));
+    $('#count').textContent = `${i + 1} / ${slides.length}`;
+    $('#prev').disabled = i === 0; $('#next').disabled = i === slides.length - 1;
+    $('#stage').scrollTop = 0;
+    const src = $('aside.src', slides[i]);
+    $('#notesBody').innerHTML = src ? src.innerHTML : '';
+    $('#notesN').textContent = `Slide ${i + 1}`;
+    if (!fromHash && location.hash !== '#s' + (i + 1)) history.replaceState(null, '', '#s' + (i + 1));
+  }
+  $('#prev').onclick = () => go(cur - 1);
+  $('#next').onclick = () => go(cur + 1);
+  const fromHash = () => { const m = /^#s(\d+)$/.exec(location.hash); go(m ? +m[1] - 1 : 0, true); };
+  addEventListener('hashchange', fromHash);
+
+  const toggleNotes = () => { const n = $('#notes'); n.hidden = !n.hidden; $('.lens').hidden = n.hidden; $('#notesBtn').hidden = n.hidden; $('#notesBtn').setAttribute('aria-pressed', !n.hidden); };
+  $('#notesBtn').onclick = toggleNotes;
+  const fullscreen = () => {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      else document.documentElement.requestFullscreen().catch(() => {});
+    } catch (_) {}
+  };
+  $('#fsBtn').onclick = fullscreen;
+  addEventListener('keydown', (e) => {
+    if (e.target.closest('input, select, textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (['ArrowRight', 'PageDown'].includes(e.key) || (e.key === ' ' && !e.target.closest('button, summary'))) { e.preventDefault(); go(cur + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(cur - 1); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(slides.length - 1);
+    else if (e.key === 'n' || e.key === 'N') toggleNotes();
+    else if (e.key === 'f' || e.key === 'F') fullscreen();
+    else if (/^[1-9]$/.test(e.key)) go(+e.key - 1);
+  });
+  let tx = null;
+  $('#stage').addEventListener('touchstart', (e) => { tx = e.touches[0].clientX; }, { passive: true });
+  $('#stage').addEventListener('touchend', (e) => {
+    if (tx == null || e.target.closest('input, pre')) return;
+    const dx = e.changedTouches[0].clientX - tx; tx = null;
+    if (Math.abs(dx) > 70) go(cur + (dx < 0 ? 1 : -1));
+  });
+
+  /* ---------- stakeholder lens ---------- */
+  $$('.chip').forEach((c) => c.onclick = () => {
+    $$('.chip').forEach((x) => x.setAttribute('aria-pressed', x === c));
+    app.dataset.lens = c.dataset.lens;
+  });
+
+  /* ---------- S2 timeline ---------- */
+  const TL = {
+    today: { label: '1–3 business days', fill: 'waiting on micro-deposits', w: 100, range: true, steps: [
+      ['Claim approved', 'day 0', ''],
+      ['Claimant finds and types routing and account numbers', 'day 0', ''],
+      ['Ascend sends micro-deposits', 'day 0–1', ''],
+      ['Claimant waits, then returns to confirm the amounts', 'day 1–3', 'bad'],
+      ['About 1 in 4 need a caseworker to finish', '+ days', 'bad'],
+      ['Ownership barely checked before the first payment', 'risk', 'bad']] },
+    plaid: { label: 'about a minute', fill: 'same day', w: 7, range: false, steps: [
+      ['Claim approved', 'day 0', ''],
+      ['Claimant picks their bank in Link, or types numbers', 'seconds', 'good'],
+      ['Account verified by Instant Auth or Database Auth', 'seconds', 'good'],
+      ['Owner matched to the claim record by Identity Match', 'seconds', 'good'],
+      ['Processor token sent to the payment platform', 'same day', 'good'],
+      ['Only real exceptions reach a caseworker, with a reason', 'by exception', '']] }
+  };
+  function setTL(k) {
+    const t = TL[k];
+    $$('[data-tl]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.tl === k));
+    const f = $('#tlFill');
+    f.className = 'fill ' + k; f.style.width = t.w + '%'; f.textContent = t.fill;
+    $('#tlRange').hidden = !t.range;
+    $('#tlLabel').textContent = t.label;
+    $('#tlSteps').innerHTML = t.steps.map(([s, w, c]) => `<li class="${c}"><span>${s}</span><span class="when">${w}</span></li>`).join('');
+  }
+  $$('[data-tl]').forEach((b) => b.onclick = () => setTL(b.dataset.tl));
+  setTL('today');
+
+  /* ---------- S3 requirement map ---------- */
+  const REQ = [
+    { t: 'Real-time account verification', k: 'Functional', for: 'ben cx', prod: ['Link', 'Auth', 'Instant Auth'],
+      how: 'The claimant logs in to their bank inside Plaid Link. Instant Auth returns verified account and routing numbers right away, so there are no micro-deposits and no waiting.',
+      asc: 'The portal opens Link straight after approval. The middleware calls /auth/get and records the method and result on the case.',
+      demo: 'Dana, flood relief: payment-ready in about a minute.' },
+    { t: "Claimants who won't connect their bank", k: 'Functional', for: 'cx ben', prod: ['Auth Type Select', 'Database Auth', 'Same-Day Micro-deposits'],
+      how: 'Link offers "connect instantly" or "enter numbers manually". Typed numbers are checked straight away against accounts Plaid has seen on its network (Database Auth). If that can\'t confirm them, Link falls back to a Same-Day micro-deposit.',
+      asc: 'Ascend decides how strict to be. In the demo, a full "pass" plus a name match is accepted; "pass with caution" goes to review. A prepaid card stays available outside Plaid.',
+      demo: 'John, cash assistance: no bank login, still payment-ready instantly.' },
+    { t: 'Account ownership & identity matching', k: 'Functional', for: 'fraud', prod: ['Identity Match'],
+      how: 'Plaid compares the account owner data held by the bank with the claimant record Ascend passes in, and returns a 0–100 score for each of name, address, phone and email. Raw owner data never has to leave Plaid. For typed numbers there is no bank login, so Database Auth\'s own name match score is used instead.',
+      asc: 'The middleware applies Ascend\'s thresholds: 70 for new enrollments, 85 for deposit changes, 50–69 to human review.',
+      demo: 'Deposit-change attack: name score 0, $1,200 held.' },
+    { t: 'Disbursement readiness & exceptions', k: 'Functional', for: 'ben fraud', prod: ['Processor tokens', 'Webhooks', '/auth/get re-check'],
+      how: 'Only payment-ready accounts get a processor token for the payment platform. Webhooks report status changes, and a re-check before each disbursement run catches accounts that have changed.',
+      asc: 'Each case lands in exactly one state (Payment ready, Pending deposit, Needs review, Fraud hold) with a reason code and an owner.',
+      demo: 'Agency console → Run pre-disbursement check.' },
+    { t: 'Real-time feedback in the flow', k: 'Functional', for: 'cx', prod: ['Link events', 'onSuccess / onExit'],
+      how: 'Link reports success, exit and errors to the portal as they happen, so the claimant always gets an immediate next step instead of a dead end.',
+      asc: 'The portal shows a plain-language result: "You\'re all set", "Check your bank for a deposit", or "We need one more step".',
+      demo: 'Every result screen in the claimant portal.' },
+    { t: 'Integration, scale & uptime', k: 'Non-functional', for: 'cio', prod: ['REST + JSON', 'Sandbox', 'Webhooks'],
+      how: 'Standard REST APIs, a full Sandbox for the SI, and webhooks for asynchronous events. Link tokens are created per session, so enrollment surges scale with the portal.',
+      asc: 'Plaid sits behind the existing API middleware. Decision rules and the audit log stay in Ascend\'s systems, where the SI owns them.',
+      demo: 'API inspector: every call, request and response, with secrets masked.' }
+  ];
+  const LENSNAME = { ben: 'Benefits Admin', fraud: 'Fraud Ops', cx: 'Constituent Exp.', cio: 'CIO' };
+  const reqList = $('#reqList');
+  REQ.forEach((r, i) => {
+    const b = document.createElement('button');
+    b.className = 'req'; b.setAttribute('role', 'tab'); b.dataset.for = r.for; b.id = 'req' + i;
+    b.innerHTML = `<span class="ix">${String(i + 1).padStart(2, '0')}</span><strong>${r.t}</strong><span class="kind">${r.k} · ${r.for.split(' ').map((x) => LENSNAME[x]).join(', ')}</span>`;
+    b.onclick = () => setReq(i);
+    b.onkeydown = (e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); const j = (i + (e.key === 'ArrowDown' ? 1 : REQ.length - 1)) % REQ.length; setReq(j); $('#req' + j).focus(); } };
+    reqList.appendChild(b);
+  });
+  function setReq(i) {
+    const r = REQ[i];
+    $$('.req').forEach((b, k) => b.setAttribute('aria-selected', k === i));
+    $('#reqPanel').dataset.for = r.for;
+    $('#reqPanel').innerHTML = `<div class="prod">${r.prod.map((p) => `<span>${p}</span>`).join('')}</div>
+      <h3 style="font-size:22px">${r.t}</h3>
+      <dl><div><dt>What Plaid does</dt><dd>${r.how}</dd></div>
+      <div><dt>How Ascend uses it</dt><dd>${r.asc}</dd></div>
+      <div><dt>See it in the demo</dt><dd><strong>${r.demo}</strong></dd></div></dl>`;
+  }
+  setReq(0);
+
+  /* ---------- S5 decision simulator (mirrors decide() in server.js) ---------- */
+  const P = { name_match_min: 70, name_review_floor: 50, contact_match_min: 70, deposit_change_name_min: 85, accept_db_pass_with_caution: false };
+  const METHOD = { instant: 'Instant Auth', db_pass: 'Database Auth', db_caution: 'Database Auth', md_pending: 'Same-Day micro-deposit', failed: '—' };
+  let sc = 'new';
+  function decide(vm, name, contact) {
+    const change = sc === 'change', min = change ? P.deposit_change_name_min : P.name_match_min;
+    if (vm === 'md_pending') return ['PENDING', 'Micro-deposit sent; waiting for the claimant to confirm', 'Claimant enters the code from their bank statement', min];
+    if (vm === 'failed') return ['REVIEW', 'Account could not be verified', 'Offer another verification path or a prepaid card', min];
+    if (vm === 'db_caution' && !P.accept_db_pass_with_caution) return ['REVIEW', 'Account format is valid but Plaid hasn\'t seen it on its network (return risk)', 'Fall back to micro-deposits or request a bank statement', min];
+    if (name >= min) {
+      if (contact >= P.contact_match_min) return ['READY', `Verified and owned by the claimant (name ${name}, best contact ${contact})`, 'Processor token sent to the payment platform', min];
+      return ['REVIEW', `Name matches (${name}) but address, phone and email don't`, 'Caseworker confirms contact details', min];
+    }
+    if (change) return ['HOLD', `Deposit change to an account owned by someone else (name ${name} < ${min})`, 'Change blocked; payments stay on the account on file; claimant notified', min];
+    if (name >= P.name_review_floor) return ['REVIEW', `Possible match (name ${name}): relative, joint account or name change`, 'Caseworker review or bank statement upload', min];
+    return ['HOLD', `Account appears to belong to someone else (name ${name})`, 'Referred to Program Integrity; payment not released', min];
+  }
+  const OUT = { READY: ['Payment ready', 's-ready'], PENDING: ['Pending deposit', 's-pending'], REVIEW: ['Needs review', 's-review'], HOLD: ['Fraud hold', 's-hold'] };
+  function sim() {
+    const vm = $('#vm').value, n = +$('#ns').value, c = +$('#cs').value;
+    $('#nsOut').textContent = n; $('#csOut').textContent = c;
+    const [o, why, next, min] = decide(vm, n, c);
+    const pill = $('#vPill'); pill.textContent = OUT[o][0]; pill.className = 'pill ' + OUT[o][1];
+    $('#vWhy').textContent = why; $('#vNext').textContent = next; $('#vMethod').textContent = METHOD[vm];
+    const you = $('#vYou'); you.textContent = 'name ' + n; you.style.left = Math.min(96, Math.max(4, n)) + '%';
+    $('#m70').classList.toggle('applies', min === 70); $('#m85').classList.toggle('applies', min === 85);
+  }
+  $$('[data-sc]').forEach((b) => b.onclick = () => { sc = b.dataset.sc; $$('[data-sc]').forEach((x) => x.setAttribute('aria-pressed', x === b)); sim(); });
+  ['#vm', '#ns', '#cs'].forEach((s) => $(s).addEventListener('input', sim));
+  const PRESETS = [
+    ['Dana', 'new', 'instant', 99, 100], ['John', 'new', 'db_pass', 100, 100], ['Spouse\'s account', 'new', 'instant', 62, 90],
+    ['Attacker', 'change', 'instant', 0, 0], ['Unknown account', 'new', 'db_caution', 90, 90]
+  ];
+  PRESETS.forEach(([label, s, vm, n, c]) => {
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = label;
+    b.onclick = () => { sc = s; $$('[data-sc]').forEach((x) => x.setAttribute('aria-pressed', x.dataset.sc === s)); $('#vm').value = vm; $('#ns').value = n; $('#cs').value = c; sim(); };
+    $('#presets').appendChild(b);
+  });
+  sim();
+
+  /* ---------- S7 API tabs ---------- */
+  const API = [
+    { t: '/link/token/create', note: 'Middleware → Plaid. The claimant record goes in here, from case management.', j: {
+      request: { client_name: 'Ascend Dept. of Benefits', language: 'en', country_codes: ['US'], products: ['auth'], required_if_supported_products: ['identity'],
+        user: { client_user_id: 'ASC-2026-118204', legal_name: 'Dana M. Reyes', phone_number: '+15175550142', email_address: 'dana.reyes@example.com',
+          address: { street: '418 Willow Bend Rd', city: 'Riverton', region: 'MI', postal_code: '48906', country: 'US' } },
+        webhook: 'https://api.ascend.example.gov/plaid/webhook' },
+      response: { link_token: 'link-sandbox-••••', expiration: '2026-11-15T18:30:00Z' } } },
+    { t: '/auth/get', note: 'Verified account and routing numbers. Full numbers stay in the middleware; the UI shows the last 4.', j: {
+      request: { access_token: 'access-sandbox-••••' },
+      response: { accounts: [{ account_id: 'BxBXxLj1m4HMXBm9WZZmCWVbPjX16EHwv99vp', mask: '0000', name: 'Plaid Checking', subtype: 'checking', verification_status: null }],
+        numbers: { ach: [{ account_id: 'BxBXxLj1m4HMXBm9WZZmCWVbPjX16EHwv99vp', account: '••••••••0000', routing: '011401533', wire_routing: '021000021' }] } } } },
+    { t: '/identity/match', note: 'Scores only. Ascend compares, and the raw owner data doesn\'t need to be stored.', j: {
+      request: { access_token: 'access-sandbox-••••', user: { legal_name: 'Dana M. Reyes', phone_number: '+15175550142', email_address: 'dana.reyes@example.com', address: { street: '418 Willow Bend Rd', postal_code: '48906' } } },
+      response: { accounts: [{ account_id: 'BxBXxLj1m4HMXBm9WZZmCWVbPjX16EHwv99vp',
+        legal_name: { score: 99, is_first_name_or_last_name_match: true, is_nickname_match: false, is_business_name_detected: false },
+        phone_number: { score: 100 }, email_address: { score: 100 }, address: { score: 100, is_postal_code_match: true } }] } } },
+    { t: '/processor/token/create', note: 'Only for payment-ready cases. The payment platform receives a token, never the account number.', j: {
+      request: { access_token: 'access-sandbox-••••', account_id: 'BxBXxLj1m4HMXBm9WZZmCWVbPjX16EHwv99vp', processor: 'dwolla' },
+      response: { processor_token: 'processor-sandbox-••••', request_id: 'Vh0Kx9Mp2aQ4' } } },
+    { t: 'webhook', note: 'Plaid → middleware. Moves a pending case forward or sends a changed account back to review.', j: {
+      webhook_type: 'AUTH', webhook_code: 'AUTOMATICALLY_VERIFIED', item_id: 'eVBnVMp7zdTJLkRNr33Rs6zr7KNJqBFL9DrE6', account_id: 'dVzbVMLjrxTnLjX4G66XUp5GLklm4oiZy88yK', environment: 'sandbox' } }
+  ];
+  const hl = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
+    .replace(/("(?:[^"\\]|\\.)*")(\s*:)?/g, (m, str, colon) => colon ? `<span class="k">${str}</span>${colon}` : `<span class="s">${str}</span>`)
+    .replace(/\b(-?\d+(?:\.\d+)?|true|false|null)\b(?![^<]*<\/span>)/g, '<span class="n">$1</span>');
+  let apiCur = 0;
+  API.forEach((a, i) => {
+    const b = document.createElement('button'); b.className = 'tab'; b.setAttribute('role', 'tab'); b.textContent = a.t;
+    b.onclick = () => setApi(i); $('#apiTabs').appendChild(b);
+  });
+  function setApi(i) {
+    apiCur = i;
+    $$('#apiTabs .tab').forEach((b, k) => b.setAttribute('aria-selected', k === i));
+    $('#apiNote').textContent = API[i].note;
+    $('#apiCode').innerHTML = hl(JSON.stringify(API[i].j, null, 2));
+    $('#copyBtn').textContent = 'Copy JSON';
+  }
+  $('#copyBtn').onclick = () => {
+    const text = JSON.stringify(API[apiCur].j, null, 2);
+    const done = () => { $('#copyBtn').textContent = 'Copied'; };
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents($('#apiCode')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $('#copyBtn').textContent = 'Selected: press ⌘C'; };
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch (_) { fallback(); }
+  };
+  setApi(0);
+
+  /* ---------- S8 estimator ---------- */
+  const fmt = (n) => Math.round(n).toLocaleString('en-US');
+  function est() {
+    const N = Math.max(0, +$('#eN').value || 0), I = +$('#eI').value, R = +$('#eR').value, M = +$('#eM').value;
+    $('#eIOut').textContent = I + '%'; $('#eROut').textContent = R + '%'; $('#eMOut').textContent = M;
+    const avoided = N * (0.25 - R / 100);
+    $('#o1').textContent = fmt(N * I / 100);
+    $('#o2').textContent = fmt(Math.max(0, avoided));
+    $('#o3').textContent = fmt(Math.max(0, avoided) * M / 60);
+    $('#o4').textContent = `25% → ${R}%`;
+  }
+  ['#eN', '#eI', '#eR', '#eM'].forEach((s) => $(s).addEventListener('input', est));
+  est();
+
+  fromHash();
+})();
+</script>
